@@ -1,6 +1,9 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
+import Cookies from 'universal-cookie';
 
 function App() {
+  const cookies = new Cookies();
+
   const [contacts, setContacts] = useState([]);
   const [contactNames, setContactNames] = useState([]);
   const [contactNumbers, setContactNumbers] = useState([]);
@@ -14,6 +17,7 @@ function App() {
   const [index, setIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  let [once, setOnce] = useState(0)
   var results = ""
 
   function addContactPage(){
@@ -35,6 +39,7 @@ function App() {
     setNumber("");
     setIndex(index + 1)
     setShowForm(false)
+    cookies.set('list', JSON.stringify(contacts), { path: '/' });
   }
 
   function handleChange(e){
@@ -46,6 +51,7 @@ function App() {
   function deleteItem(id){
     const newList = contacts.filter(person => person.ranId !== id);
     setContacts(newList);
+    cookies.set('list', JSON.stringify(contacts), { path: '/' });
   }
 
   function editContact(e, id){
@@ -56,7 +62,15 @@ function App() {
     list[index].number = newNumber;
     setContacts(list)
     setShowEdit(false)
+    cookies.set('list', JSON.stringify(contacts), { path: '/' });
     return false
+  }
+
+  function initCookies(list, once) {
+      if (once !== 1) {
+        setContacts(list)
+        setOnce(1)
+		}
   }
 
   useEffect(() =>{
@@ -71,11 +85,16 @@ function App() {
       );
     }
     setSearchResults(results);
+    
+    let list = cookies.get('list')
+		if (list) {
+      initCookies(list, once)
+		}
   }, [searchTerm]);
 
   return (
     <div className="App">
-      <h1>Contacts</h1>
+      <h1 style={{color: "white"}}>Contacts</h1>
       <input 
         className="search-bar"
         type="text"
@@ -117,11 +136,12 @@ function App() {
 
       <div>
             {contacts.map((person) => 
-            <li className="contact-list" key={person.ranId}>{person.name} {person.number}
-              <button className="edit-delete" onClick={() => setShowEdit(!showEdit)}>
+              <li className="contact-list" key={person.ranId}>
+                <p>{person.name} - {person.number}</p>
+              <button className="edit" onClick={() => setShowEdit(!showEdit)}>
                 Edit
               </button>
-              <button className="edit-delete" onClick={() => deleteItem(person.ranId)}>
+              <button className="delete" onClick={() => deleteItem(person.ranId)}>
                 Delete
               </button>
               {showEdit && (
